@@ -16,6 +16,12 @@ public sealed class SymbolTools(WorkspaceManager workspaceManager, SymbolResolve
     public async Task<string> FindSymbol(string symbolName, CancellationToken cancellationToken)
     {
         var symbols = await symbolResolver.FindByNameAsync(workspaceManager, symbolName, cancellationToken);
+
+        if (symbols.Count == 0)
+        {
+            return $"Symbol not found: {symbolName}";
+        }
+
         return string.Join(Environment.NewLine, symbols.Select(symbol => symbol.ToDisplayString()));
     }
 
@@ -46,7 +52,7 @@ public sealed class SymbolTools(WorkspaceManager workspaceManager, SymbolResolve
                     var filePath = lineSpan.Path;
                     var lineNumber = lineSpan.StartLinePosition.Line + 1;
 
-                    return $"{symbol.ToDisplayString()}{Environment.NewLine}  file: {filePath}{Environment.NewLine}  line: {lineNumber}";
+                    return $"{symbol.ToDisplayString()}{Environment.NewLine}  File: {filePath}{Environment.NewLine}  Line: {lineNumber}";
                 }));
         }
 
@@ -103,7 +109,7 @@ public sealed class SymbolTools(WorkspaceManager workspaceManager, SymbolResolve
                     var filePath = lineSpan.Path;
                     var lineNumber = lineSpan.StartLinePosition.Line + 1;
 
-                    return $"{symbol.ToDisplayString()}{Environment.NewLine}  file: {filePath}{Environment.NewLine}  line: {lineNumber}";
+                    return $"{symbol.ToDisplayString()}{Environment.NewLine}  File: {filePath}{Environment.NewLine}  Line: {lineNumber}";
                 }));
         }
 
@@ -129,7 +135,7 @@ public sealed class SymbolTools(WorkspaceManager workspaceManager, SymbolResolve
                 var filePath = lineSpan.Path;
                 var lineNumber = lineSpan.StartLinePosition.Line + 1;
 
-                return $"{symbol.ToDisplayString()}{Environment.NewLine}  file: {filePath}{Environment.NewLine}  line: {lineNumber}";
+                return $"{symbol.ToDisplayString()}{Environment.NewLine}  File: {filePath}{Environment.NewLine}  Line: {lineNumber}";
             })
             .ToList();
 
@@ -170,7 +176,7 @@ public sealed class SymbolTools(WorkspaceManager workspaceManager, SymbolResolve
                     var filePath = lineSpan.Path;
                     var lineNumber = lineSpan.StartLinePosition.Line + 1;
 
-                    return $"{symbol.ToDisplayString()}{Environment.NewLine}  file: {filePath}{Environment.NewLine}  line: {lineNumber}";
+                    return $"{symbol.ToDisplayString()}{Environment.NewLine}  File: {filePath}{Environment.NewLine}  Line: {lineNumber}";
                 }));
         }
 
@@ -237,7 +243,7 @@ public sealed class SymbolTools(WorkspaceManager workspaceManager, SymbolResolve
                     var filePath = lineSpan.Path;
                     var lineNumber = lineSpan.StartLinePosition.Line + 1;
 
-                    return $"{symbol.ToDisplayString()}{Environment.NewLine}  file: {filePath}{Environment.NewLine}  line: {lineNumber}";
+                    return $"{symbol.ToDisplayString()}{Environment.NewLine}  File: {filePath}{Environment.NewLine}  Line: {lineNumber}";
                 }));
         }
 
@@ -263,7 +269,7 @@ public sealed class SymbolTools(WorkspaceManager workspaceManager, SymbolResolve
                 var filePath = lineSpan.Path;
                 var lineNumber = lineSpan.StartLinePosition.Line + 1;
 
-                return $"{symbol.ToDisplayString()}{Environment.NewLine}  file: {filePath}{Environment.NewLine}  line: {lineNumber}";
+                return $"{symbol.ToDisplayString()}{Environment.NewLine}  File: {filePath}{Environment.NewLine}  Line: {lineNumber}";
             })
             .ToList();
 
@@ -304,7 +310,7 @@ public sealed class SymbolTools(WorkspaceManager workspaceManager, SymbolResolve
                     var filePath = lineSpan.Path;
                     var lineNumber = lineSpan.StartLinePosition.Line + 1;
 
-                    return $"{symbol.ToDisplayString()}{Environment.NewLine}  file: {filePath}{Environment.NewLine}  line: {lineNumber}";
+                    return $"{symbol.ToDisplayString()}{Environment.NewLine}  File: {filePath}{Environment.NewLine}  Line: {lineNumber}";
                 }));
         }
 
@@ -328,8 +334,8 @@ public sealed class SymbolTools(WorkspaceManager workspaceManager, SymbolResolve
 
             sources.Add(
                 $"Symbol: {result.Symbol.ToDisplayString()}{Environment.NewLine}" +
-                $"file: {filePath}{Environment.NewLine}" +
-                $"lines: {startLine}-{endLine}{Environment.NewLine}{Environment.NewLine}" +
+                $"File: {filePath}{Environment.NewLine}" +
+                $"Lines: {startLine}-{endLine}{Environment.NewLine}{Environment.NewLine}" +
                 syntax.ToFullString().Trim());
         }
 
@@ -363,7 +369,7 @@ public sealed class SymbolTools(WorkspaceManager workspaceManager, SymbolResolve
                     var filePath = lineSpan.Path;
                     var lineNumber = lineSpan.StartLinePosition.Line + 1;
 
-                    return $"{symbol.ToDisplayString()}{Environment.NewLine}  file: {filePath}{Environment.NewLine}  line: {lineNumber}";
+                    return $"{symbol.ToDisplayString()}{Environment.NewLine}  File: {filePath}{Environment.NewLine}  Line: {lineNumber}";
                 }));
         }
 
@@ -446,7 +452,7 @@ public sealed class SymbolTools(WorkspaceManager workspaceManager, SymbolResolve
     [McpServerTool, Description("Returns the outgoing call graph of a method in the loaded .NET solution.")]
     public async Task<string> GetCallGraph(string symbolName, string? file = null, int? line = null, int maxDepth = 3, CancellationToken cancellationToken = default)
     {
-        var result = await symbolResolver.ResolveAsync(workspaceManager,symbolName,file,line,cancellationToken);
+        var result = await symbolResolver.ResolveAsync(workspaceManager, symbolName, file, line, cancellationToken);
 
         if (result.Status == SymbolResolutionStatus.NotFound)
         {
@@ -471,8 +477,8 @@ public sealed class SymbolTools(WorkspaceManager workspaceManager, SymbolResolve
                     var lineNumber = lineSpan.StartLinePosition.Line + 1;
 
                     return $"{symbol.ToDisplayString()}{Environment.NewLine}" +
-                           $"  file: {filePath}{Environment.NewLine}" +
-                           $"  line: {lineNumber}";
+                            $"  File: {filePath}{Environment.NewLine}" +
+                            $"  Line: {lineNumber}";
                 }));
         }
 
@@ -481,7 +487,7 @@ public sealed class SymbolTools(WorkspaceManager workspaceManager, SymbolResolve
             return $"Symbol is not a method: {result.Symbol!.ToDisplayString()}";
         }
 
-        var graph = await callGraphBuilder.BuildAsync(methodSymbol,maxDepth, cancellationToken);
+        var graph = await callGraphBuilder.BuildAsync(methodSymbol, maxDepth, cancellationToken);
 
         var lines = new List<string>();
 
@@ -489,7 +495,7 @@ public sealed class SymbolTools(WorkspaceManager workspaceManager, SymbolResolve
 
         return string.Join(Environment.NewLine, lines);
 
-        static void AddNode(CallGraphNode node,List<string> lines, int depth)
+        static void AddNode(CallGraphNode node, List<string> lines, int depth)
         {
             var indent = new string(' ', depth * 2);
 
@@ -515,7 +521,7 @@ public sealed class SymbolTools(WorkspaceManager workspaceManager, SymbolResolve
             return $"No matches found: {query}";
         }
 
-        return string.Join(Environment.NewLine + Environment.NewLine,results.Select(result =>
+        return string.Join(Environment.NewLine + Environment.NewLine, results.Select(result =>
                 $"[{result.MatchKind}]{Environment.NewLine}" + $"Symbol: {result.Symbol}{Environment.NewLine}" +
                 $"File: {result.File}{Environment.NewLine}" + $"Line: {result.Line}{Environment.NewLine}" +
                 $"Match: {result.Match}"));
