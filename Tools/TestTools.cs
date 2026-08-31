@@ -26,7 +26,7 @@ public static class TestTools
         
         foreach (var project in solution.Projects)
         {
-            var compilation = await project.GetCompilationAsync(cancellationToken);
+            var compilation = workspaceManager.GetCompilation(project.Id);
             results.Add($"{project.Name}: Documents={project.DocumentIds.Count}, SyntaxTrees={compilation?.SyntaxTrees.Count() ?? 0}");
         }
 
