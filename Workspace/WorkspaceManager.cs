@@ -81,7 +81,7 @@ public sealed class WorkspaceManager : IAsyncDisposable
                 }
             }
 
-            return _solution;
+            return _solution ?? throw new InvalidOperationException("Solution could not be loaded.");
         }
         finally
         {

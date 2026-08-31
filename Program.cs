@@ -1,4 +1,8 @@
-﻿using DotNet.RoslynMcp.Symbols;
+﻿using DotNet.RoslynMcp.CallGraph;
+using DotNet.RoslynMcp.DependencyInjection;
+using DotNet.RoslynMcp.Endpoints;
+using DotNet.RoslynMcp.Search;
+using DotNet.RoslynMcp.Symbols;
 using DotNet.RoslynMcp.Workspace;
 using Microsoft.Build.Locator;
 using Microsoft.Extensions.DependencyInjection;
@@ -34,9 +38,12 @@ builder.Services.AddMcpServer().WithStdioServerTransport().WithToolsFromAssembly
 
 
 builder.Services.AddSingleton<SymbolResolver>();
+builder.Services.AddSingleton<CallGraphBuilder>();
 builder.Services.AddSingleton<WorkspaceManager>();
 builder.Services.AddHostedService<WorkspaceStarter>();
-
+builder.Services.AddSingleton<SemanticSearchService>();
+builder.Services.AddSingleton<EndpointMapService>();
+builder.Services.AddSingleton<DiRegistrationService>();
 
 var app = builder.Build();
 
