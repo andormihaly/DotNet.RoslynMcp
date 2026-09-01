@@ -6,6 +6,8 @@ public sealed class WorkspaceStarter(WorkspaceManager workspaceManager, Workspac
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await workspaceManager.LoadSolutionAsync(options.SolutionPath, stoppingToken);
+        var solutionPath = Path.GetFullPath(options.SolutionPath);
+
+        await workspaceManager.LoadSolutionAsync(solutionPath, stoppingToken);
     }
 }
