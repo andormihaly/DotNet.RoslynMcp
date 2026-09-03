@@ -1,13 +1,16 @@
-﻿using DotNet.RoslynMcp.Workspace;
+﻿using DotNet.RoslynMcp.Projects;
+using DotNet.RoslynMcp.Workspace;
 using ModelContextProtocol.Server;
 using System.ComponentModel;
 
 namespace DotNet.RoslynMcp.Tools;
 
 [McpServerToolType]
-public sealed class ProjectTools(WorkspaceManager workspaceManager)
+public sealed class ProjectTools(
+    WorkspaceManager workspaceManager,
+    ProjectFileReader projectFileReader)
 {
-    [McpServerTool, Description("Returns information about a project in the loaded .NET solution.")]
+    [McpServerTool, Description("Returns detailed information about a project in the loaded .NET solution, including build settings, package references, and project dependencies.")]
     public async Task<string> GetProjectInfo(string projectName, CancellationToken cancellationToken = default)
     {
         var solution = await workspaceManager.GetSolutionAsync(cancellationToken);
@@ -20,18 +23,61 @@ public sealed class ProjectTools(WorkspaceManager workspaceManager)
             return $"Project not found: {projectName}";
         }
 
+        var solutionDirectory = Path.GetDirectoryName(solution.FilePath)
+            ?? throw new InvalidOperationException("Solution path is not available.");
+
+        var projectFilePath = project.FilePath;
+        var relativeProjectPath = projectFilePath is null
+            ? "unknown"
+            : Path.GetRelativePath(solutionDirectory, projectFilePath);
+
         var lines = new List<string>
         {
             $"Project: {project.Name}",
             $"Language: {project.Language}",
-            $"File: {project.FilePath}",
+            $"File: {relativeProjectPath}",
             $"Assembly: {project.AssemblyName}",
+            $"Output kind: {project.CompilationOptions?.OutputKind}",
             $"Documents: {project.DocumentIds.Count}"
         };
+
+        if (projectFilePath is not null && File.Exists(projectFilePath))
+        {
+            var projectFileInfo = await projectFileReader.ReadProjectFileInfoAsync(projectFilePath, solutionDirectory, cancellationToken);
+
+            if (!string.IsNullOrWhiteSpace(projectFileInfo.TargetFramework))
+            {
+                lines.Add($"Target framework: {projectFileInfo.TargetFramework}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(projectFileInfo.Nullable))
+            {
+                lines.Add($"Nullable: {projectFileInfo.Nullable}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(projectFileInfo.ImplicitUsings))
+            {
+                lines.Add($"Implicit usings: {projectFileInfo.ImplicitUsings}");
+            }
+
+            if (projectFileInfo.PackageReferences.Count > 0)
+            {
+                lines.Add(string.Empty);
+                lines.Add("Package references:");
+
+                foreach (var packageReference in projectFileInfo.PackageReferences.OrderBy(package => package.Name))
+                {
+                    lines.Add(string.IsNullOrWhiteSpace(packageReference.Version)
+                        ? $"  {packageReference.Name}"
+                        : $"  {packageReference.Name} ({packageReference.Version})");
+                }
+            }
+        }
 
         var projectReferences = project.ProjectReferences
             .Select(reference => solution.GetProject(reference.ProjectId))
             .Where(referencedProject => referencedProject is not null)
+            .OrderBy(referencedProject => referencedProject!.Name)
             .ToList();
 
         if (projectReferences.Count > 0)
@@ -47,6 +93,7 @@ public sealed class ProjectTools(WorkspaceManager workspaceManager)
 
         return string.Join(Environment.NewLine, lines);
     }
+
     [McpServerTool, Description("Returns the project dependency graph of the loaded .NET solution.")]
     public async Task<string> GetDependencyGraph(CancellationToken cancellationToken = default)
     {
@@ -56,29 +103,27 @@ public sealed class ProjectTools(WorkspaceManager workspaceManager)
 
         foreach (var project in solution.Projects.OrderBy(project => project.Name))
         {
-            lines.Add(project.Name);
-
-            var dependencies = project.ProjectReferences
+            var references = project.ProjectReferences
                 .Select(reference => solution.GetProject(reference.ProjectId))
-                .Where(dependency => dependency is not null)
-                .OrderBy(dependency => dependency!.Name)
+                .Where(referencedProject => referencedProject is not null)
+                .Select(referencedProject => referencedProject!.Name)
+                .OrderBy(name => name)
                 .ToList();
 
-            if (dependencies.Count == 0)
+            if (references.Count == 0)
             {
-                lines.Add("  -> none");
-            }
-            else
-            {
-                foreach (var dependency in dependencies)
-                {
-                    lines.Add($"  -> {dependency!.Name}");
-                }
+                lines.Add($"{project.Name} -> (none)");
+                continue;
             }
 
-            lines.Add(string.Empty);
+            foreach (var reference in references)
+            {
+                lines.Add($"{project.Name} -> {reference}");
+            }
         }
 
-        return string.Join(Environment.NewLine, lines).TrimEnd();
+        return lines.Count == 0
+            ? "No projects found."
+            : string.Join(Environment.NewLine, lines);
     }
 }

@@ -1,6 +1,7 @@
 ﻿using DotNet.RoslynMcp.CallGraph;
 using DotNet.RoslynMcp.DependencyInjection;
 using DotNet.RoslynMcp.Endpoints;
+using DotNet.RoslynMcp.Projects;
 using DotNet.RoslynMcp.Search;
 using DotNet.RoslynMcp.Symbols;
 using DotNet.RoslynMcp.Workspace;
@@ -44,6 +45,7 @@ builder.Services.AddHostedService<WorkspaceStarter>();
 builder.Services.AddSingleton<SemanticSearchService>();
 builder.Services.AddSingleton<EndpointMapService>();
 builder.Services.AddSingleton<DiRegistrationService>();
+builder.Services.AddSingleton<ProjectFileReader>();
 
 var app = builder.Build();
 

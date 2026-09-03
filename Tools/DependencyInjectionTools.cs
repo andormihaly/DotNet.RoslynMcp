@@ -19,6 +19,9 @@ public sealed class DependencyInjectionTools(DiRegistrationService diRegistratio
                 $"Lifetime: {registration.Lifetime}{Environment.NewLine}" +
                 $"Service: {registration.Service}{Environment.NewLine}" +
                 $"Implementation: {registration.Implementation}{Environment.NewLine}" +
+                $"Key: {registration.Key ?? "none"}{Environment.NewLine}" +
+                $"Duplicate: {registration.IsDuplicate}{Environment.NewLine}" +
+                $"Captive dependency risk: {registration.HasCaptiveDependencyRisk}{Environment.NewLine}" +
                 $"File: {registration.File}{Environment.NewLine}" +
                 $"Line: {registration.Line}"));
     }
